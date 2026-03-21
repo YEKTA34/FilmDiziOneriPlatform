@@ -1,16 +1,6 @@
 version: '3.8'
+
 services:
-  contentservice:
-    build: ./contentservice  
-    container_name: content_service_container
-    ports:
-      - "8081:8080"
-    depends_on:
-      - mongodb
-    environment:
-      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/film_arsivi
-    networks:
-      - film_network
   mongodb:
     image: mongo:latest
     container_name: mongodb_container
@@ -20,8 +10,32 @@ services:
       - mongo_data:/data/db
     networks:
       - film_network
+
+  contentservice:
+    build: ./contentservice
+    container_name: content_service_container
+    ports:
+      - "8081:8080"
+    depends_on:
+      - mongodb
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/film_arsivi
+    networks:
+      - film_network
+
+  reviewservice:
+    build: ./reviewservice  
+    container_name: review_service_container
+    ports:
+      - "8082:8080"
+    depends_on:
+      - mongodb
+    networks:
+      - film_network
+
 networks:
   film_network:
     driver: bridge
+
 volumes:
   mongo_data:
