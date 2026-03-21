@@ -1,0 +1,4 @@
+com\yazlab\reviewservice\controller\ReviewController.class
+com\yazlab\reviewservice\ReviewApplication.class
+com\yazlab\reviewservice\repository\ReviewRepository.class
+com\yazlab\reviewservice\model\Review.class
