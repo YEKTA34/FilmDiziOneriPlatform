@@ -1,8 +1,7 @@
 package com.yazlab.contentservice.controller;
-
+import com.yazlab.contentservice.service.ContentService;
 import com.yazlab.contentservice.model.Film;
 import com.yazlab.contentservice.repository.FilmRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -10,16 +9,19 @@ import java.util.List;
 @RequestMapping("/api/films")
 public class FilmController {
 
-    @Autowired
-    private FilmRepository repository;
+    private final ContentService contentService; // İsim güncellendi
+
+    public FilmController(ContentService contentService) {
+        this.contentService = contentService;
+    }
 
     @GetMapping
     public List<Film> getFilms() {
-        return repository.findAll(); // MongoDB'deki tüm filmleri getirir
+        return contentService.getAllFilms();
     }
 
     @PostMapping
     public Film addFilm(@RequestBody Film film) {
-        return repository.save(film); // Yeni film ekler
+        return contentService.saveFilm(film);
     }
 }
