@@ -1,32 +1,36 @@
 package com.yazlab.reviewservice.controller;
 
-import com.yazlab.reviewservice.model.Review;
-import com.yazlab.reviewservice.repository.ReviewRepository;
+import com.yazlab.reviewservice.dto.ReviewRequest;
+import com.yazlab.reviewservice.dto.ReviewResponse;
+import com.yazlab.reviewservice.service.ReviewService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/reviews")
 public class ReviewController {
 
-    private final ReviewRepository repository;
+    private final ReviewService reviewService;
 
-    public ReviewController(ReviewRepository repository) {
-        this.repository = repository;
+    
+    public ReviewController(ReviewService reviewService) {
+        this.reviewService = reviewService;
     }
 
     @GetMapping
-    public List<Review> getAllReviews() {
-        return repository.findAll();
+    public ResponseEntity<List<ReviewResponse>> getAllReviews() {
+        return ResponseEntity.ok(reviewService.getAllReviews());
     }
 
     @PostMapping
-    public Review addReview(@RequestBody Review review) {
-        return repository.save(review);
+    public ResponseEntity<ReviewResponse> addReview(@RequestBody ReviewRequest request) {
+        return ResponseEntity.ok(reviewService.saveReview(request));
     }
 
     @GetMapping("/film/{filmId}")
-    public List<Review> getReviewsByFilm(@PathVariable String filmId) {
-        return repository.findByFilmId(filmId);
+    public ResponseEntity<List<ReviewResponse>> getReviewsByFilm(@PathVariable String filmId) {
+        return ResponseEntity.ok(reviewService.getReviewsByFilmId(filmId));
     }
 }
