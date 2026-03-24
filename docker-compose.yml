@@ -15,11 +15,11 @@ services:
     build: ./contentservice
     container_name: content_service_container
     ports:
-      - "8081:8080"
+      - "8081:8081" 
     depends_on:
       - mongodb
     environment:
-      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/film_arsivi
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/filmdb
     networks:
       - film_network
 
@@ -27,11 +27,35 @@ services:
     build: ./reviewservice  
     container_name: review_service_container
     ports:
-      - "8082:8080"
+      - "8082:8082" 
     depends_on:
       - mongodb
     networks:
       - film_network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - film_network
+    depends_on:
+      - contentservice
+      - reviewservice
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "4000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin 
+    networks:
+      - film_network
+    depends_on:
+      - prometheus
 
 networks:
   film_network:
