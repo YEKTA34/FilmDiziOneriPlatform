@@ -1,18 +1,24 @@
 spring:
   application:
     name: content-service
-  mongodb:
-    uri: mongodb://mongodb:27017/filmdb
+  data:
+    mongodb:
+      uri: mongodb://mongodb:27017/filmdb
+
+server:
+  port: 8081
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
-  metrics:
-    export:
-      prometheus:
+        include: "health,info,prometheus,metrics"
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
         enabled: true
-
-server:
-  port: 8080

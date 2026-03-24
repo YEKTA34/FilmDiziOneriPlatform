@@ -1,4 +1,7 @@
 com\yazlab\reviewservice\controller\ReviewController.class
-com\yazlab\reviewservice\ReviewApplication.class
+com\yazlab\reviewservice\service\ReviewService.class
+com\yazlab\reviewservice\dto\ReviewRequest.class
 com\yazlab\reviewservice\repository\ReviewRepository.class
 com\yazlab\reviewservice\model\Review.class
+com\yazlab\reviewservice\ReviewApplication.class
+com\yazlab\reviewservice\dto\ReviewResponse.class
