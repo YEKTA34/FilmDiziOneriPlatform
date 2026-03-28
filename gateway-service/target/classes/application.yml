@@ -1,0 +1,22 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: content-service-route
+          uri: http://contentservice:8081
+          predicates:
+            - Path=/api/films/**
+
+        - id: review-service-route
+          uri: http://reviewservice:8082
+          predicates:
+            - Path=/api/reviews/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus

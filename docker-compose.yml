@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_container
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - film_network
+
+  gateway-service:
+    build: ./gateway-service
+    container_name: gateway_container
+    ports:
+      - "9000:8080"
+    networks:
+      - film_network
+    depends_on:
+      - contentservice
+      - reviewservice
+
+  contentservice:
+    build: ./contentservice
+    container_name: content_service_container
+    ports:
+      - "8081:8081" 
+    depends_on:
+      - film-db 
+    networks:
+      - film_network
+
+  reviewservice:
+    build: ./reviewservice  
+    container_name: review_service_container
+    ports:
+      - "8082:8082" 
+    depends_on:
+      - mongodb
+    networks:
+      - film_network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - film_network
+    depends_on:
+      - contentservice
+      - reviewservice
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "4000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin 
+    networks:
+      - film_network
+    depends_on:
+      - prometheus
+
+  film-db: 
+    image: postgres:15
+    container_name: film-db
+    environment:
+      - POSTGRES_USER=yekta
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=filmplatform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks: 
+      - film_network
+
+networks:
+  film_network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  postgres_data:
