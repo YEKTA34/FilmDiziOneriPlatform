@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ReviewDTO {
     private String id;
-    private Long filmId;
+    private String filmId;
     
     @JsonProperty("yorumMetni") 
     private String yorumMetni;
@@ -13,8 +13,8 @@ public class ReviewDTO {
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
-    public Long getFilmId() { return filmId; }
-    public void setFilmId(Long filmId) { this.filmId = filmId; }
+    public String getFilmId() { return filmId; }
+    public void setFilmId(String filmId) { this.filmId = filmId; }
     
     public String getYorumMetni() { return yorumMetni; }
     public void setYorumMetni(String yorumMetni) { this.yorumMetni = yorumMetni; }

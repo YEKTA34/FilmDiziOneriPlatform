@@ -25,12 +25,12 @@ public class FilmController {
     }
 
     @GetMapping("/{id}")
-    public Film getFilmById(@PathVariable Long id) {
+    public Film getFilmById(@PathVariable String id) {
         return contentService.getFilmById(id);
     }
 
     @GetMapping("/{id}/details")
-    public ResponseEntity<Map<String, Object>> getFilmWithReviews(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getFilmWithReviews(@PathVariable String id) {
         Film film = contentService.getFilmById(id);
         
         List<ReviewDTO> reviews = contentService.getFilmReviews(id);
@@ -48,7 +48,7 @@ public class FilmController {
     }
     
     @DeleteMapping("/{id}")
-    public void deleteFilm(@PathVariable Long id) {
+    public void deleteFilm(@PathVariable String id) {
         contentService.deleteFilm(id);
     }
 }

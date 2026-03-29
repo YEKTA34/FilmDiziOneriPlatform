@@ -1,18 +1,13 @@
 package com.yazlab.contentservice.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity 
-@Table(name = "films") 
+@Document(collection = "films")
 public class Film {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) 
-    private Long id; 
+    private String id;
     
     private String filmAdi;
     private String tur;
@@ -31,8 +26,8 @@ public class Film {
         this.puan = puan;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getFilmAdi() { return filmAdi; }
     public void setFilmAdi(String filmAdi) { this.filmAdi = filmAdi; }

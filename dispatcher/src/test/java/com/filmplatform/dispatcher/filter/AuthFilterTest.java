@@ -36,7 +36,7 @@ class AuthFilterTest {
 
     @Test
     void should_reject_request_without_token() throws Exception {
-        when(request.getRequestURI()).thenReturn("/content/films");
+        when(request.getRequestURI()).thenReturn("/api/films");
         when(request.getHeader("Authorization")).thenReturn(null);
         authFilter.doFilter(request, response, filterChain);
         verify(response, times(1)).sendError(401, "Token bulunamadi");
@@ -44,7 +44,7 @@ class AuthFilterTest {
 
     @Test
     void should_reject_request_with_invalid_token() throws Exception {
-        when(request.getRequestURI()).thenReturn("/content/films");
+        when(request.getRequestURI()).thenReturn("/api/films");
         when(request.getHeader("Authorization")).thenReturn("Bearer invalid-token");
         authFilter.doFilter(request, response, filterChain);
         verify(response, times(1)).sendError(403, "Gecersiz token");
@@ -52,7 +52,7 @@ class AuthFilterTest {
 
     @Test
     void should_pass_request_with_valid_token() throws Exception {
-        when(request.getRequestURI()).thenReturn("/content/films");
+        when(request.getRequestURI()).thenReturn("/api/films");
         when(request.getHeader("Authorization")).thenReturn("Bearer valid-token");
         authFilter.doFilter(request, response, filterChain);
         verify(filterChain, times(1)).doFilter(request, response);

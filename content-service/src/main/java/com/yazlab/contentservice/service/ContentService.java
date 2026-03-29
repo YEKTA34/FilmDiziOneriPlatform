@@ -29,19 +29,19 @@ public class ContentService {
         return repository.save(film);
     }
 
-    public Film getFilmById(Long id) {
+    public Film getFilmById(String id) {
         return repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Film bulunamadı: " + id));
     }
 
-    public void deleteFilm(Long id) {
+    public void deleteFilm(String id) {
         if (!repository.existsById(id)) {
             throw new RuntimeException("Silinecek film bulunamadı: " + id);
         }
         repository.deleteById(id);
     }
 
-    public List<ReviewDTO> getFilmReviews(Long filmId) {
+    public List<ReviewDTO> getFilmReviews(String filmId) {
         return reviewClient.getReviewsByFilmId(filmId);
     }
 }

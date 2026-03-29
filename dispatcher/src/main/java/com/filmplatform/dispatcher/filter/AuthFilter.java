@@ -28,7 +28,8 @@ public class AuthFilter implements Filter {
 
         String uri = httpRequest.getRequestURI();
 
-        if (uri.startsWith("/auth/")) {
+        // Whitelist auth and actuator endpoints
+        if (uri.startsWith("/auth") || uri.startsWith("/actuator")) {
             chain.doFilter(request, response);
             return;
         }

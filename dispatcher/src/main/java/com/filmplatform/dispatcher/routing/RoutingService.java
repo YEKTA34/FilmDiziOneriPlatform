@@ -12,9 +12,9 @@ public class RoutingService {
     public String resolveServiceUrl(String requestUri) {
         if (requestUri.startsWith("/auth/")) {
             return AUTH_SERVICE + requestUri;
-        } else if (requestUri.startsWith("/content/")) {
+        } else if (requestUri.startsWith("/api/films")) {
             return CONTENT_SERVICE + requestUri;
-        } else if (requestUri.startsWith("/reviews/")) {
+        } else if (requestUri.startsWith("/api/reviews")) {
             return REVIEW_SERVICE + requestUri;
         }
         return null;
