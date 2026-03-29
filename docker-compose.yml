@@ -1,0 +1,129 @@
+version: '3.8'
+
+networks:
+  internal-network:
+    driver: bridge
+  external-network:
+    driver: bridge
+
+services:
+
+  # ===== DISPATCHER =====
+  dispatcher:
+    build: ./dispatcher
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo-dispatcher:27017/dispatcher_db
+      - JWT_SECRET=filmplatform-secret-key-must-be-at-least-32-chars
+    depends_on:
+      - mongo-dispatcher
+      - auth-service
+      - content-service
+      - review-service
+    networks:
+      - internal-network
+      - external-network
+
+  # ===== AUTH SERVICE =====
+  auth-service:
+    build: ./auth-service
+    expose:
+      - "8081"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo-auth:27017/auth_db
+      - JWT_SECRET=filmplatform-secret-key-must-be-at-least-32-chars
+    depends_on:
+      - mongo-auth
+    networks:
+      - internal-network
+
+  # ===== CONTENT SERVICE =====
+  content-service:
+    build: ./content-service
+    expose:
+      - "8082"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo-content:27017/content_db
+    depends_on:
+      - mongo-content
+    networks:
+      - internal-network
+
+  # ===== REVIEW SERVICE =====
+  review-service:
+    build: ./review-service
+    expose:
+      - "8083"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo-review:27017/review_db
+    depends_on:
+      - mongo-review
+    networks:
+      - internal-network
+
+  # ===== MONGODB'LER =====
+  mongo-dispatcher:
+    image: mongo:7.0
+    expose:
+      - "27017"
+    volumes:
+      - mongo-dispatcher-data:/data/db
+    networks:
+      - internal-network
+
+  mongo-auth:
+    image: mongo:7.0
+    expose:
+      - "27017"
+    volumes:
+      - mongo-auth-data:/data/db
+    networks:
+      - internal-network
+
+  mongo-content:
+    image: mongo:7.0
+    expose:
+      - "27017"
+    volumes:
+      - mongo-content-data:/data/db
+    networks:
+      - internal-network
+
+  mongo-review:
+    image: mongo:7.0
+    expose:
+      - "27017"
+    volumes:
+      - mongo-review-data:/data/db
+    networks:
+      - internal-network
+
+  # ===== PROMETHEUS =====
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - internal-network
+
+  # ===== GRAFANA =====
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - internal-network
+      - external-network
+
+volumes:
+  mongo-dispatcher-data:
+  mongo-auth-data:
+  mongo-content-data:
+  mongo-review-data:

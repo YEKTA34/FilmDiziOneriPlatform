@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: dispatcher
+  data:
+    mongodb:
+      uri: mongodb://mongo-dispatcher:27017/dispatcher_db
+
+jwt:
+  secret: filmplatform-secret-key-must-be-at-least-32-chars
+
+services:
+  auth: http://auth-service:8081
+  content: http://content-service:8082
+  review: http://review-service:8083
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true

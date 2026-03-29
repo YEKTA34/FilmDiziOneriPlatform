@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: review-service
+  data:
+    mongodb:
+      uri: mongodb://mongodb_container:27017/reviewdb
+
+server:
+  port: 8082
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,prometheus,metrics"
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name} 
