@@ -423,28 +423,28 @@ graph LR
 ### 4.1 Ekran Görüntüleri
 
 - **Kullanıcı Kayıt İsteği (POST /auth/register):**  
-  ![](../screenshoots/kullanici_kayit.png)
+  ![](screenshoots/kullanici_kayit.png)
 
 - **Kullanıcı Giriş ve Token Alma (POST /auth/login):**  
-  ![](../screenshoots/kullanici_giris.png)
+  ![](screenshoots/kullanici_giris.png)
 
 - **Film Listeleme (GET /api/films):**  
-  ![](../screenshoots/tum_filmler.png)
+  ![](screenshoots/tum_filmler.png)
 
 - **Film Ekleme (POST /api/films):**  
-  ![](../screenshoots/film_ekle.png)
+  ![](screenshoots/film_ekle.png)
 
 - **Film Detay + Yorumlar (GET /api/films/{id}/details):**  
-  ![](../screenshoots/film_detay.png)
+  ![](screenshoots/film_detay.png)
 
 - **Yorum Ekleme (POST /api/reviews):**  
-  ![](../screenshoots/yorum_ve_puan_ekle.png)
+  ![](screenshoots/yorum_ve_puan_ekle.png)
 
 - **Grafana Dashboard:**  
   `[EKRAN GÖRÜNTÜSÜ EKLE — Servis metrikleri gösterimi]`
 
 - **Locust Yük Testi Sonuçları:**  
-  ![](../screenshoots/locust.png)
+  ![](screenshoots/locust.png)
 
 ### 4.2 Test Senaryoları
 
