@@ -464,20 +464,6 @@ Dispatcher servisinde JUnit 5 ve Mockito kullanılarak TDD yaklaşımıyla birim
 | `ProxyServiceTest` | `should_forward_request_and_return_response` | İstek başarıyla iletilmeli | HTTP 200 |
 | `ProxyServiceTest` | `should_return_503_when_service_unavailable` | Servis erişilemezse 503 dönmeli | HTTP 503 |
 
-#### Yük Testi (Locust)
-
-`locustfile.py` dosyası ile aşağıdaki senaryolar otomatik olarak çalıştırılmaktadır:
-
-| Senaryo | Ağırlık | Açıklama |
-|---|---|---|
-| Kayıt + Giriş | Her kullanıcı başlangıcında | Sanal kullanıcı oluşturulur, token alınır. |
-| Film Listeleme | ×3 (en sık) | `GET /api/films` — Okuma ağırlıklı yük simülasyonu. |
-| Film Ekleme | ×1 | `POST /api/films` — Yazma yükü simülasyonu. |
-| Yorum Ekleme + Detay Getirme | ×2 | `POST /api/reviews` + `GET /api/films/{id}/details` — Servisler arası iletişim testi. |
-
-**Test Sonucu:**  
-`[Locust çıktısındaki ortalama yanıt süresi, başarı oranı ve hata yüzdesi buraya yazılacak]`
-
 ---
 
 ## 5. Sonuç ve Tartışma
