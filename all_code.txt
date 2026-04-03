@@ -1,0 +1,3396 @@
+﻿
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\.idea\misc.xml =====
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectRootManager" version="2" project-jdk-name="openjdk-25" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+</project>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\.idea\modules.xml =====
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/YazLab-Proje1.iml" filepath="$PROJECT_DIR$/.idea/YazLab-Proje1.iml" />
+    </modules>
+  </component>
+</project>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\.idea\vcs.xml =====
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$/FilmDiziOneriPlatform" vcs="Git" />
+  </component>
+</project>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\.mvn\wrapper\maven-wrapper.properties =====
+wrapperVersion=3.3.4
+distributionType=only-script
+distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.12/apache-maven-3.9.12-bin.zip
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\auth-service\.mvn\wrapper\maven-wrapper.properties =====
+wrapperVersion=3.3.4
+distributionType=only-script
+distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.14/apache-maven-3.9.14-bin.zip
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\auth-service\src\main\java\com\filmplatform\auth\config\SecurityConfig.java =====
+package com.filmplatform.auth.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers(org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest.toAnyEndpoint()).permitAll()
+                        .anyRequest().denyAll()
+                );
+        return http.build();
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\auth-service\src\main\java\com\filmplatform\auth\controller\AuthController.java =====
+package com.filmplatform.auth.controller;
+
+import com.filmplatform.auth.dto.AuthResponse;
+import com.filmplatform.auth.dto.LoginRequest;
+import com.filmplatform.auth.dto.RegisterRequest;
+import com.filmplatform.auth.service.AuthService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        try {
+            AuthResponse response = authService.register(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        try {
+            AuthResponse response = authService.login(request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\auth-service\src\main\java\com\filmplatform\auth\dto\AuthResponse.java =====
+package com.filmplatform.auth.dto;
+
+import lombok.Data;
+import lombok.AllArgsConstructor;
+
+@Data
+@AllArgsConstructor
+public class AuthResponse {
+    private String token;
+    private String username;
+    private String role;
+    private String message;
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\auth-service\src\main\java\com\filmplatform\auth\dto\LoginRequest.java =====
+package com.filmplatform.auth.dto;
+
+import lombok.Data;
+
+@Data
+public class LoginRequest {
+    private String username;
+    private String password;
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\auth-service\src\main\java\com\filmplatform\auth\dto\RegisterRequest.java =====
+package com.filmplatform.auth.dto;
+
+import lombok.Data;
+
+@Data
+public class RegisterRequest {
+    private String username;
+    private String email;
+    private String password;
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\auth-service\src\main\java\com\filmplatform\auth\model\User.java =====
+package com.filmplatform.auth.model;
+
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.index.Indexed;
+
+@Data
+@Document(collection = "users")
+public class User {
+
+    @Id
+    private String id;
+
+    @Indexed(unique = true)
+    private String username;
+
+    @Indexed(unique = true)
+    private String email;
+
+    private String password;
+    private String role;
+
+    public User() {}
+
+    public User(String username, String email, String password, String role) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\auth-service\src\main\java\com\filmplatform\auth\repository\UserRepository.java =====
+package com.filmplatform.auth.repository;
+
+import com.filmplatform.auth.model.User;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface UserRepository extends MongoRepository<User, String> {
+
+    Optional<User> findByUsername(String username);
+    Optional<User> findByEmail(String email);
+    boolean existsByUsername(String username);
+    boolean existsByEmail(String email);
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\auth-service\src\main\java\com\filmplatform\auth\security\JwtUtil.java =====
+package com.filmplatform.auth.security;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.util.Date;
+
+@Component
+public class JwtUtil {
+
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
+    @Value("${jwt.expiration}")
+    private long jwtExpiration;
+
+    public String generateToken(String username, String role) {
+        Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        return Jwts.builder()
+                .setSubject(username)
+                .claim("role", role)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .signWith(key)
+                .compact();
+    }
+
+    public String extractUsername(String token) {
+        return extractClaims(token).getSubject();
+    }
+
+    public String extractRole(String token) {
+        return extractClaims(token).get("role", String.class);
+    }
+
+    public boolean isTokenValid(String token) {
+        try {
+            Claims claims = extractClaims(token);
+            return claims.getExpiration().after(new Date());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private Claims extractClaims(String token) {
+        Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\auth-service\src\main\java\com\filmplatform\auth\service\AuthService.java =====
+package com.filmplatform.auth.service;
+
+import com.filmplatform.auth.dto.AuthResponse;
+import com.filmplatform.auth.dto.LoginRequest;
+import com.filmplatform.auth.dto.RegisterRequest;
+import com.filmplatform.auth.model.User;
+import com.filmplatform.auth.repository.UserRepository;
+import com.filmplatform.auth.security.JwtUtil;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AuthService {
+
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
+
+    public AuthService(UserRepository userRepository,
+                       JwtUtil jwtUtil,
+                       PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public AuthResponse register(RegisterRequest request) {
+
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new RuntimeException("Bu kullanici adi zaten kullaniliyor");
+        }
+
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Bu email zaten kullaniliyor");
+        }
+
+        User user = new User(
+                request.getUsername(),
+                request.getEmail(),
+                passwordEncoder.encode(request.getPassword()),
+                "USER"
+        );
+        userRepository.save(user);
+
+        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
+        return new AuthResponse(token, user.getUsername(), user.getRole(), "Kayit basarili");
+    }
+
+    public AuthResponse login(LoginRequest request) {
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new RuntimeException("Kullanici bulunamadi"));
+
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Yanlis sifre");
+        }
+
+        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
+        return new AuthResponse(token, user.getUsername(), user.getRole(), "Giris basarili");
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\auth-service\src\main\java\com\filmplatform\auth\AuthApplication.java =====
+package com.filmplatform.auth;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+@SpringBootApplication
+public class AuthApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(AuthApplication.class, args);
+	}
+
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\auth-service\src\main\resources\application.yml =====
+server:
+  port: 8081
+
+spring:
+  application:
+    name: auth-service
+  data:
+    mongodb:
+      uri: mongodb://mongo-auth:27017/auth_db
+
+jwt:
+  secret: filmplatform-secret-key-must-be-at-least-32-chars
+  expiration: 86400000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\auth-service\src\test\java\com\filmplatform\auth\AuthServiceApplicationTests.java =====
+package com.filmplatform.auth;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class AuthServiceApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\auth-service\Dockerfile =====
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8081
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\auth-service\pom.xml =====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.2.3</version>
+	</parent>
+	<groupId>com.filmplatform</groupId>
+	<artifactId>auth-service</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>auth-service</name>
+	<properties>
+		<java.version>17</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-mongodb</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.11.5</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.11.5</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>0.11.5</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\.mvn\wrapper\maven-wrapper.properties =====
+wrapperVersion=3.3.4
+distributionType=only-script
+distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.12/apache-maven-3.9.12-bin.zip
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\controller\ContentController.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\dto\FilmRequest.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\dto\FilmResponse.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\java\com\yazlab\contentservice\client\ReviewClient.java =====
+package com.yazlab.contentservice.client;
+
+import com.yazlab.contentservice.dto.ReviewDTO;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import java.util.List;
+
+@FeignClient(name = "review-service", url = "http://review-service:8083") 
+public interface ReviewClient {
+    
+    @GetMapping("/api/reviews/film/{filmId}")
+    List<ReviewDTO> getReviewsByFilmId(@PathVariable("filmId") String filmId);
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\java\com\yazlab\contentservice\controller\FilmController.java =====
+package com.yazlab.contentservice.controller;
+
+import com.yazlab.contentservice.service.ContentService;
+import com.yazlab.contentservice.model.Film;
+import com.yazlab.contentservice.dto.ReviewDTO; 
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity; 
+import java.util.List;
+import java.util.Map; 
+import java.util.HashMap; 
+
+@RestController
+@RequestMapping("/api/films")
+public class FilmController {
+
+    private final ContentService contentService; 
+
+    public FilmController(ContentService contentService) {
+        this.contentService = contentService;
+    }
+
+    @GetMapping
+    public List<Film> getFilms() {
+        return contentService.getAllFilms();
+    }
+
+    @GetMapping("/{id}")
+    public Film getFilmById(@PathVariable String id) {
+        return contentService.getFilmById(id);
+    }
+
+    @GetMapping("/{id}/details")
+    public ResponseEntity<Map<String, Object>> getFilmWithReviews(@PathVariable String id) {
+        Film film = contentService.getFilmById(id);
+        
+        List<ReviewDTO> reviews = contentService.getFilmReviews(id);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("film", film);
+        response.put("reviews", reviews);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping
+    public Film addFilm(@RequestBody Film film) {
+        return contentService.saveFilm(film);
+    }
+    
+    @DeleteMapping("/{id}")
+    public void deleteFilm(@PathVariable String id) {
+        contentService.deleteFilm(id);
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\java\com\yazlab\contentservice\dto\FilmRequest.java =====
+package com.yazlab.contentservice.dto;
+
+public class FilmRequest {
+    private String filmAdi;
+    private String tur;
+    private int yil;
+    private String yonetmen;
+    private double puan;
+    public FilmRequest() {}
+
+    public String getFilmAdi() { return filmAdi; }
+    public void setFilmAdi(String filmAdi) { this.filmAdi = filmAdi; }
+
+    public String getTur() { return tur; }
+    public void setTur(String tur) { this.tur = tur; }
+
+    public int getYil() { return yil; }
+    public void setYil(int yil) { this.yil = yil; }
+
+    public String getYonetmen() { return yonetmen; }
+    public void setYonetmen(String yonetmen) { this.yonetmen = yonetmen; }
+
+    public double getPuan() { return puan; }
+    public void setPuan(double puan) { this.puan = puan; }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\java\com\yazlab\contentservice\dto\FilmResponse.java =====
+package com.yazlab.contentservice.dto;
+
+public class FilmResponse {
+    private String id;
+    private String filmAdi;
+    private String tur;
+    private int yil;
+    private String yonetmen;
+    private double puan;
+
+    public FilmResponse() {}
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+
+    public String getFilmAdi() { return filmAdi; }
+    public void setFilmAdi(String filmAdi) { this.filmAdi = filmAdi; }
+
+    public String getTur() { return tur; }
+    public void setTur(String tur) { this.tur = tur; }
+
+    public int getYil() { return yil; }
+    public void setYil(int yil) { this.yil = yil; }
+
+    public String getYonetmen() { return yonetmen; }
+    public void setYonetmen(String yonetmen) { this.yonetmen = yonetmen; }
+
+    public double getPuan() { return puan; }
+    public void setPuan(double puan) { this.puan = puan; }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\java\com\yazlab\contentservice\dto\ReviewDTO.java =====
+package com.yazlab.contentservice.dto;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class ReviewDTO {
+    private String id;
+    private String filmId;
+    
+    @JsonProperty("yorumMetni") 
+    private String yorumMetni;
+    
+    private int puan;
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getFilmId() { return filmId; }
+    public void setFilmId(String filmId) { this.filmId = filmId; }
+    
+    public String getYorumMetni() { return yorumMetni; }
+    public void setYorumMetni(String yorumMetni) { this.yorumMetni = yorumMetni; }
+    
+    public int getPuan() { return puan; }
+    public void setPuan(int puan) { this.puan = puan; }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\java\com\yazlab\contentservice\model\Film.java =====
+package com.yazlab.contentservice.model;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "films")
+public class Film {
+
+    @Id
+    private String id;
+    
+    private String filmAdi;
+    private String tur;
+    private int yil;
+    private String yonetmen;
+    private double puan;
+
+    public Film() {
+    }
+
+    public Film(String filmAdi, String tur, int yil, String yonetmen, double puan) {
+        this.filmAdi = filmAdi;
+        this.tur = tur;
+        this.yil = yil;
+        this.yonetmen = yonetmen;
+        this.puan = puan;
+    }
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+
+    public String getFilmAdi() { return filmAdi; }
+    public void setFilmAdi(String filmAdi) { this.filmAdi = filmAdi; }
+
+    public String getTur() { return tur; }
+    public void setTur(String tur) { this.tur = tur; }
+
+    public int getYil() { return yil; }
+    public void setYil(int yil) { this.yil = yil; }
+
+    public String getYonetmen() { return yonetmen; }
+    public void setYonetmen(String yonetmen) { this.yonetmen = yonetmen; }
+
+    public double getPuan() { return puan; }
+    public void setPuan(double puan) { this.puan = puan; }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\java\com\yazlab\contentservice\repository\FilmRepository.java =====
+package com.yazlab.contentservice.repository;
+
+import com.yazlab.contentservice.model.Film;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+
+
+
+@Repository
+public interface FilmRepository extends MongoRepository<Film, String> { 
+    
+    
+    Film findByFilmAdi(String filmAdi);
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\java\com\yazlab\contentservice\service\ContentService.java =====
+package com.yazlab.contentservice.service;
+
+import com.yazlab.contentservice.client.ReviewClient;
+import com.yazlab.contentservice.dto.ReviewDTO;
+import com.yazlab.contentservice.model.Film;
+import com.yazlab.contentservice.repository.FilmRepository;
+import org.springframework.stereotype.Service;
+import java.util.List;
+
+@Service
+public class ContentService {
+
+    private final FilmRepository repository;
+    private final ReviewClient reviewClient;
+
+    public ContentService(FilmRepository repository, ReviewClient reviewClient) {
+        this.repository = repository;
+        this.reviewClient = reviewClient;
+    }
+
+    public List<Film> getAllFilms() {
+        return repository.findAll();
+    }
+
+    public Film saveFilm(Film film) {
+        if (film.getFilmAdi() == null || film.getFilmAdi().trim().isEmpty()) {
+            throw new RuntimeException("Film adÄ± boÅŸ bÄ±rakÄ±lamaz!");
+        }
+        return repository.save(film);
+    }
+
+    public Film getFilmById(String id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Film bulunamadÄ±: " + id));
+    }
+
+    public void deleteFilm(String id) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("Silinecek film bulunamadÄ±: " + id);
+        }
+        repository.deleteById(id);
+    }
+
+    public List<ReviewDTO> getFilmReviews(String filmId) {
+        return reviewClient.getReviewsByFilmId(filmId);
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\java\com\yazlab\contentservice\ContentApplication.java =====
+package com.yazlab.contentservice;
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\java\com\yazlab\contentservice\ContentServiceApplication.java =====
+package com.yazlab.contentservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+@EnableFeignClients 
+@SpringBootApplication
+public class ContentServiceApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(ContentServiceApplication.class, args);
+	}
+
+}
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\model\Film.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\repository\FilmRepository.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\resources\application.yml =====
+server:
+  port: 8082
+
+spring:
+  application:
+    name: content-service
+  data:
+    mongodb:
+      uri: mongodb://mongo-content:27017/content_db
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\service\ContentService.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\main\ContentApplication.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\src\test\java\com\yazlab\content_service\ContentServiceApplicationTests.java =====
+package com.yazlab.content_service;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class ContentServiceApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\Dockerfile =====
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8082
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\content-service\pom.xml =====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.4</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.yazlab</groupId>
+    <artifactId>content-service</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>content-service</name>
+
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2023.0.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\contentservice\.mvn\wrapper\maven-wrapper.properties =====
+wrapperVersion=3.3.4
+distributionType=only-script
+distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.12/apache-maven-3.9.12-bin.zip
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\contentservice\src\main\java\com\yazlab\contentservice\client\ReviewClient.java =====
+package com.yazlab.contentservice.client;
+
+import com.yazlab.contentservice.dto.ReviewDTO;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import java.util.List;
+
+@FeignClient(name = "review-service", url = "http://reviewservice:8082") 
+public interface ReviewClient {
+    
+    @GetMapping("/api/reviews/film/{filmId}")
+    List<ReviewDTO> getReviewsByFilmId(@PathVariable("filmId") Long filmId);
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\contentservice\src\main\java\com\yazlab\contentservice\controller\FilmController.java =====
+package com.yazlab.contentservice.controller;
+
+import com.yazlab.contentservice.service.ContentService;
+import com.yazlab.contentservice.model.Film;
+import com.yazlab.contentservice.dto.ReviewDTO; 
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity; 
+import java.util.List;
+import java.util.Map; 
+import java.util.HashMap; 
+
+@RestController
+@RequestMapping("/api/films")
+public class FilmController {
+
+    private final ContentService contentService; 
+
+    public FilmController(ContentService contentService) {
+        this.contentService = contentService;
+    }
+
+    @GetMapping
+    public List<Film> getFilms() {
+        return contentService.getAllFilms();
+    }
+
+    @GetMapping("/{id}")
+    public Film getFilmById(@PathVariable Long id) {
+        return contentService.getFilmById(id);
+    }
+
+    @GetMapping("/{id}/details")
+    public ResponseEntity<Map<String, Object>> getFilmWithReviews(@PathVariable Long id) {
+        Film film = contentService.getFilmById(id);
+        
+        List<ReviewDTO> reviews = contentService.getFilmReviews(id);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("film", film);
+        response.put("reviews", reviews);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping
+    public Film addFilm(@RequestBody Film film) {
+        return contentService.saveFilm(film);
+    }
+    
+    @DeleteMapping("/{id}")
+    public void deleteFilm(@PathVariable Long id) {
+        contentService.deleteFilm(id);
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\contentservice\src\main\java\com\yazlab\contentservice\dto\FilmRequest.java =====
+package com.yazlab.contentservice.dto;
+
+public class FilmRequest {
+    private String filmAdi;
+    private String tur;
+    private int yil;
+    private String yonetmen;
+    private double puan;
+    public FilmRequest() {}
+
+    public String getFilmAdi() { return filmAdi; }
+    public void setFilmAdi(String filmAdi) { this.filmAdi = filmAdi; }
+
+    public String getTur() { return tur; }
+    public void setTur(String tur) { this.tur = tur; }
+
+    public int getYil() { return yil; }
+    public void setYil(int yil) { this.yil = yil; }
+
+    public String getYonetmen() { return yonetmen; }
+    public void setYonetmen(String yonetmen) { this.yonetmen = yonetmen; }
+
+    public double getPuan() { return puan; }
+    public void setPuan(double puan) { this.puan = puan; }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\contentservice\src\main\java\com\yazlab\contentservice\dto\FilmResponse.java =====
+package com.yazlab.contentservice.dto;
+
+public class FilmResponse {
+    private String id;
+    private String filmAdi;
+    private String tur;
+    private int yil;
+    private String yonetmen;
+    private double puan;
+
+    public FilmResponse() {}
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+
+    public String getFilmAdi() { return filmAdi; }
+    public void setFilmAdi(String filmAdi) { this.filmAdi = filmAdi; }
+
+    public String getTur() { return tur; }
+    public void setTur(String tur) { this.tur = tur; }
+
+    public int getYil() { return yil; }
+    public void setYil(int yil) { this.yil = yil; }
+
+    public String getYonetmen() { return yonetmen; }
+    public void setYonetmen(String yonetmen) { this.yonetmen = yonetmen; }
+
+    public double getPuan() { return puan; }
+    public void setPuan(double puan) { this.puan = puan; }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\contentservice\src\main\java\com\yazlab\contentservice\dto\ReviewDTO.java =====
+package com.yazlab.contentservice.dto;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class ReviewDTO {
+    private String id;
+    private Long filmId;
+    
+    @JsonProperty("yorumMetni") 
+    private String yorumMetni;
+    
+    private int puan;
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public Long getFilmId() { return filmId; }
+    public void setFilmId(Long filmId) { this.filmId = filmId; }
+    
+    public String getYorumMetni() { return yorumMetni; }
+    public void setYorumMetni(String yorumMetni) { this.yorumMetni = yorumMetni; }
+    
+    public int getPuan() { return puan; }
+    public void setPuan(int puan) { this.puan = puan; }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\contentservice\src\main\java\com\yazlab\contentservice\model\Film.java =====
+package com.yazlab.contentservice.model;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity 
+@Table(name = "films") 
+public class Film {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) 
+    private Long id; 
+    
+    private String filmAdi;
+    private String tur;
+    private int yil;
+    private String yonetmen;
+    private double puan;
+
+    public Film() {
+    }
+
+    public Film(String filmAdi, String tur, int yil, String yonetmen, double puan) {
+        this.filmAdi = filmAdi;
+        this.tur = tur;
+        this.yil = yil;
+        this.yonetmen = yonetmen;
+        this.puan = puan;
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getFilmAdi() { return filmAdi; }
+    public void setFilmAdi(String filmAdi) { this.filmAdi = filmAdi; }
+
+    public String getTur() { return tur; }
+    public void setTur(String tur) { this.tur = tur; }
+
+    public int getYil() { return yil; }
+    public void setYil(int yil) { this.yil = yil; }
+
+    public String getYonetmen() { return yonetmen; }
+    public void setYonetmen(String yonetmen) { this.yonetmen = yonetmen; }
+
+    public double getPuan() { return puan; }
+    public void setPuan(double puan) { this.puan = puan; }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\contentservice\src\main\java\com\yazlab\contentservice\repository\FilmRepository.java =====
+package com.yazlab.contentservice.repository;
+
+import com.yazlab.contentservice.model.Film;
+import org.springframework.data.jpa.repository.JpaRepository; 
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface FilmRepository extends JpaRepository<Film, Long> { 
+    
+    
+    Film findByFilmAdi(String filmAdi);
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\contentservice\src\main\java\com\yazlab\contentservice\service\ContentService.java =====
+package com.yazlab.contentservice.service;
+
+import com.yazlab.contentservice.client.ReviewClient;
+import com.yazlab.contentservice.dto.ReviewDTO;
+import com.yazlab.contentservice.model.Film;
+import com.yazlab.contentservice.repository.FilmRepository;
+import org.springframework.stereotype.Service;
+import java.util.List;
+
+@Service
+public class ContentService {
+
+    private final FilmRepository repository;
+    private final ReviewClient reviewClient;
+
+    public ContentService(FilmRepository repository, ReviewClient reviewClient) {
+        this.repository = repository;
+        this.reviewClient = reviewClient;
+    }
+
+    public List<Film> getAllFilms() {
+        return repository.findAll();
+    }
+
+    public Film saveFilm(Film film) {
+        if (film.getFilmAdi() == null || film.getFilmAdi().trim().isEmpty()) {
+            throw new RuntimeException("Film adÄ± boÅŸ bÄ±rakÄ±lamaz!");
+        }
+        return repository.save(film);
+    }
+
+    public Film getFilmById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Film bulunamadÄ±: " + id));
+    }
+
+    public void deleteFilm(Long id) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("Silinecek film bulunamadÄ±: " + id);
+        }
+        repository.deleteById(id);
+    }
+
+    public List<ReviewDTO> getFilmReviews(Long filmId) {
+        return reviewClient.getReviewsByFilmId(filmId);
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\contentservice\src\main\java\com\yazlab\contentservice\ContentApplication.java =====
+package com.yazlab.contentservice;
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\contentservice\src\main\java\com\yazlab\contentservice\ContentServiceApplication.java =====
+package com.yazlab.contentservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+@EnableFeignClients 
+@SpringBootApplication
+public class ContentServiceApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(ContentServiceApplication.class, args);
+	}
+
+}
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\contentservice\src\main\resources\application.yml =====
+spring:
+  application:
+    name: content-service
+  
+  datasource:
+    
+    url: jdbc:postgresql://film-db:5432/filmplatform
+    username: yekta
+    password: pass
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      
+      ddl-auto: update
+    show-sql: true 
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,prometheus,metrics"
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\contentservice\src\test\java\com\yazlab\content_service\ContentServiceApplicationTests.java =====
+package com.yazlab.content_service;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class ContentServiceApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\contentservice\Dockerfile =====
+FROM eclipse-temurin:17-jdk-alpine
+WORKDIR /app
+COPY target/content-service-0.0.1-SNAPSHOT.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\contentservice\pom.xml =====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.4</version> 
+        <relativePath/> 
+    </parent>
+
+    <groupId>com.yazlab</groupId>
+    <artifactId>content-service</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>content-service</name>
+
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+    </dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2023.0.0</version> <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\.mvn\wrapper\maven-wrapper.properties =====
+wrapperVersion=3.3.4
+distributionType=only-script
+distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.12/apache-maven-3.9.12-bin.zip
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\src\main\java\com\filmplatform\dispatcher\exception\GlobalExceptionHandler.java =====
+package com.filmplatform.dispatcher.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ResourceAccessException.class)
+    public ResponseEntity<Map<String, Object>> handleServiceUnavailable(ResourceAccessException e) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("status", 503);
+        error.put("message", "Servis su an erisilebilir degil");
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(error);
+    }
+
+    @ExceptionHandler(HttpClientErrorException.class)
+    public ResponseEntity<Map<String, Object>> handleClientError(HttpClientErrorException e) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("status", e.getStatusCode().value());
+        error.put("message", e.getMessage());
+        return ResponseEntity.status(e.getStatusCode()).body(error);
+    }
+
+    @ExceptionHandler(HttpServerErrorException.class)
+    public ResponseEntity<Map<String, Object>> handleServerError(HttpServerErrorException e) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("status", e.getStatusCode().value());
+        error.put("message", "Sunucu hatasi olustu");
+        return ResponseEntity.status(e.getStatusCode()).body(error);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGeneral(Exception e) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("status", 500);
+        error.put("message", "Beklenmeyen bir hata olustu");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\src\main\java\com\filmplatform\dispatcher\filter\AuthFilter.java =====
+package com.filmplatform.dispatcher.filter;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+
+@Component
+public class AuthFilter implements Filter {
+
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
+
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletResponse httpResponse = (HttpServletResponse) response;
+
+        String uri = httpRequest.getRequestURI();
+
+        // Whitelist auth and actuator endpoints
+        if (uri.startsWith("/auth") || uri.startsWith("/actuator")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        String authHeader = httpRequest.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            httpResponse.sendError(401, "Token bulunamadi");
+            return;
+        }
+
+        String token = authHeader.substring(7);
+        if (!isTokenValid(token)) {
+            httpResponse.sendError(403, "Gecersiz token");
+            return;
+        }
+
+        chain.doFilter(request, response);
+    }
+
+    private boolean isTokenValid(String token) {
+        try {
+            Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            return claims.getSubject() != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\src\main\java\com\filmplatform\dispatcher\logging\LogEntry.java =====
+package com.filmplatform.dispatcher.logging;
+
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDateTime;
+
+@Data
+@Document(collection = "logs")
+public class LogEntry {
+
+    @Id
+    private String id;
+    private String method;
+    private String uri;
+    private int statusCode;
+    private String clientIp;
+    private LocalDateTime timestamp;
+    private long durationMs;
+
+    public LogEntry(String method, String uri, int statusCode, String clientIp, long durationMs) {
+        this.method = method;
+        this.uri = uri;
+        this.statusCode = statusCode;
+        this.clientIp = clientIp;
+        this.durationMs = durationMs;
+        this.timestamp = LocalDateTime.now();
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\src\main\java\com\filmplatform\dispatcher\logging\LogService.java =====
+package com.filmplatform.dispatcher.logging;
+
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.stereotype.Service;
+
+@Service
+public class LogService {
+
+    private final MongoTemplate mongoTemplate;
+
+    public LogService(MongoTemplate mongoTemplate) {
+        this.mongoTemplate = mongoTemplate;
+    }
+
+    public void log(String method, String uri, int statusCode, String clientIp, long durationMs) {
+        LogEntry entry = new LogEntry(method, uri, statusCode, clientIp, durationMs);
+        mongoTemplate.save(entry);
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\src\main\java\com\filmplatform\dispatcher\proxy\ProxyService.java =====
+package com.filmplatform.dispatcher.proxy;
+
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+@Service
+public class ProxyService {
+
+    private final RestTemplate restTemplate;
+
+    public ProxyService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    public ResponseEntity<String> forward(String targetUrl, HttpMethod method, HttpHeaders headers, String body) {
+        try {
+            HttpEntity<String> entity = new HttpEntity<>(body, headers);
+            return restTemplate.exchange(targetUrl, method, entity, String.class);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body("{\"error\": \"Servis su an erisilebilir degil\"}");
+        }
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\src\main\java\com\filmplatform\dispatcher\routing\RoutingService.java =====
+package com.filmplatform.dispatcher.routing;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class RoutingService {
+
+    private static final String AUTH_SERVICE = "http://auth-service:8081";
+    private static final String CONTENT_SERVICE = "http://content-service:8082";
+    private static final String REVIEW_SERVICE = "http://review-service:8083";
+
+    public String resolveServiceUrl(String requestUri) {
+        if (requestUri.startsWith("/auth/")) {
+            return AUTH_SERVICE + requestUri;
+        } else if (requestUri.startsWith("/api/films")) {
+            return CONTENT_SERVICE + requestUri;
+        } else if (requestUri.startsWith("/api/reviews")) {
+            return REVIEW_SERVICE + requestUri;
+        }
+        return null;
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\src\main\java\com\filmplatform\dispatcher\Application.java =====
+package com.filmplatform.dispatcher;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.client.RestTemplate;
+
+@SpringBootApplication
+public class Application {
+
+	public static void main(String[] args) {
+		SpringApplication.run(Application.class, args);
+	}
+
+	@Bean
+	public RestTemplate restTemplate() {
+		return new RestTemplate();
+	}
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\src\main\java\com\filmplatform\dispatcher\DispatcherController.java =====
+package com.filmplatform.dispatcher;
+
+import com.filmplatform.dispatcher.logging.LogService;
+import com.filmplatform.dispatcher.proxy.ProxyService;
+import com.filmplatform.dispatcher.routing.RoutingService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Collections;
+import java.util.Map;
+
+@RestController
+public class DispatcherController {
+
+    private final RoutingService routingService;
+    private final ProxyService proxyService;
+    private final LogService logService;
+
+    public DispatcherController(RoutingService routingService,
+                                ProxyService proxyService,
+                                LogService logService) {
+        this.routingService = routingService;
+        this.proxyService = proxyService;
+        this.logService = logService;
+    }
+
+    @RequestMapping("/**")
+    public ResponseEntity<String> dispatch(
+            @RequestBody(required = false) String body,
+            HttpMethod method,
+            HttpServletRequest request) {
+
+        long startTime = System.currentTimeMillis();
+        String uri = request.getRequestURI();
+        String clientIp = request.getRemoteAddr();
+
+        String targetUrl = routingService.resolveServiceUrl(uri);
+
+
+        if (targetUrl == null) {
+            logService.log(method.name(), uri, 404, clientIp, 0);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("{\"error\": \"Endpoint bulunamadi\"}");
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        Collections.list(request.getHeaderNames())
+                .forEach(headerName -> headers.add(headerName, request.getHeader(headerName)));
+
+        ResponseEntity<String> response = proxyService.forward(targetUrl, method, headers, body);
+
+
+        long duration = System.currentTimeMillis() - startTime;
+        logService.log(method.name(), uri, response.getStatusCode().value(), clientIp, duration);
+
+        return response;
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\src\main\resources\application.yml =====
+server:
+  port: 8080
+
+spring:
+  application:
+    name: dispatcher
+  data:
+    mongodb:
+      uri: mongodb://mongo-dispatcher:27017/dispatcher_db
+
+jwt:
+  secret: filmplatform-secret-key-must-be-at-least-32-chars
+
+services:
+  auth: http://auth-service:8081
+  content: http://content-service:8082
+  review: http://review-service:8083
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\src\test\java\com\filmplatform\dispatcher\filter\AuthFilterTest.java =====
+package com.filmplatform.dispatcher.filter;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class AuthFilterTest {
+
+    @InjectMocks
+    private AuthFilter authFilter;
+
+    @Mock
+    private HttpServletRequest request;
+
+    @Mock
+    private HttpServletResponse response;
+
+    @Mock
+    private FilterChain filterChain;
+
+    @Test
+    void should_pass_auth_endpoints_without_token() throws Exception {
+        when(request.getRequestURI()).thenReturn("/auth/login");
+        authFilter.doFilter(request, response, filterChain);
+        verify(filterChain, times(1)).doFilter(request, response);
+    }
+
+    @Test
+    void should_reject_request_without_token() throws Exception {
+        when(request.getRequestURI()).thenReturn("/api/films");
+        when(request.getHeader("Authorization")).thenReturn(null);
+        authFilter.doFilter(request, response, filterChain);
+        verify(response, times(1)).sendError(401, "Token bulunamadi");
+    }
+
+    @Test
+    void should_reject_request_with_invalid_token() throws Exception {
+        when(request.getRequestURI()).thenReturn("/api/films");
+        when(request.getHeader("Authorization")).thenReturn("Bearer invalid-token");
+        authFilter.doFilter(request, response, filterChain);
+        verify(response, times(1)).sendError(403, "Gecersiz token");
+    }
+
+    @Test
+    void should_pass_request_with_valid_token() throws Exception {
+        when(request.getRequestURI()).thenReturn("/api/films");
+        when(request.getHeader("Authorization")).thenReturn("Bearer valid-token");
+        authFilter.doFilter(request, response, filterChain);
+        verify(filterChain, times(1)).doFilter(request, response);
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\src\test\java\com\filmplatform\dispatcher\proxy\ProxyServiceTest.java =====
+package com.filmplatform.dispatcher.proxy;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.*;
+import org.springframework.web.client.RestTemplate;
+
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+@ExtendWith(MockitoExtension.class)
+class ProxyServiceTest {
+
+    @InjectMocks
+    private ProxyService proxyService;
+
+    @Mock
+    private RestTemplate restTemplate;
+
+    @Test
+    void should_forward_request_and_return_response() {
+        String targetUrl = "http://content-service:8082/content/films";
+        HttpHeaders headers = new HttpHeaders();
+        String body = null;
+
+        ResponseEntity<String> mockResponse = new ResponseEntity<>("{}", HttpStatus.OK);
+        when(restTemplate.exchange(
+                eq(targetUrl),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class)
+        )).thenReturn(mockResponse);
+
+        ResponseEntity<String> result = proxyService.forward(targetUrl, HttpMethod.GET, headers, body);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+    }
+
+    @Test
+    void should_return_503_when_service_unavailable() {
+        String targetUrl = "http://content-service:8082/content/films";
+        HttpHeaders headers = new HttpHeaders();
+
+        when(restTemplate.exchange(
+                eq(targetUrl),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class)
+        )).thenThrow(new RuntimeException("Service unavailable"));
+
+        ResponseEntity<String> result = proxyService.forward(targetUrl, HttpMethod.GET, headers, null);
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, result.getStatusCode());
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\src\test\java\com\filmplatform\dispatcher\routing\RoutingServiceTest.java =====
+package com.filmplatform.dispatcher.routing;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class RoutingServiceTest {
+
+    private RoutingService routingService;
+
+    @BeforeEach
+    void setUp() {
+        routingService = new RoutingService();
+    }
+
+    @Test
+    void should_route_content_request_to_content_service() {
+        String url = routingService.resolveServiceUrl("/api/films/123");
+        assertEquals("http://content-service:8082/api/films/123", url);
+    }
+
+    @Test
+    void should_route_review_request_to_review_service() {
+        String url = routingService.resolveServiceUrl("/api/reviews/123");
+        assertEquals("http://review-service:8083/api/reviews/123", url);
+    }
+
+    @Test
+    void should_route_auth_request_to_auth_service() {
+        String url = routingService.resolveServiceUrl("/auth/login");
+        assertEquals("http://auth-service:8081/auth/login", url);
+    }
+
+    @Test
+    void should_return_null_for_unknown_path() {
+        String url = routingService.resolveServiceUrl("/unknown/path");
+        assertNull(url);
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\src\test\java\com\filmplatform\dispatcher\ApplicationTests.java =====
+package com.filmplatform.dispatcher;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class ApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\Dockerfile =====
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\dispatcher\pom.xml =====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.2.3</version>
+	</parent>
+	<groupId>com.filmplatform</groupId>
+	<artifactId>dispatcher</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>dispatcher</name>
+	<properties>
+		<java.version>17</java.version>
+	</properties>
+	<dependencies>
+		<!-- Spring Web -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<!-- Spring Data MongoDB -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-mongodb</artifactId>
+		</dependency>
+		<!-- Spring Actuator (Prometheus iÃ§in) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<!-- Micrometer Prometheus -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
+		<!-- JWT -->
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.11.5</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.11.5</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>0.11.5</version>
+		</dependency>
+		<!-- Lombok -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<!-- Test -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\gateway-service\.mvn\wrapper\maven-wrapper.properties =====
+wrapperVersion=3.3.4
+distributionType=only-script
+distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.12/apache-maven-3.9.12-bin.zip
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\gateway-service\src\main\java\com\yazlab\gateway\GatewayApplication.java =====
+package com.yazlab.gateway;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class GatewayApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(GatewayApplication.class, args);
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\gateway-service\src\main\resources\application.yml =====
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: content-service-route
+          uri: http://contentservice:8081
+          predicates:
+            - Path=/api/films/**
+
+        - id: review-service-route
+          uri: http://reviewservice:8082
+          predicates:
+            - Path=/api/reviews/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\gateway-service\Dockerfile =====
+FROM eclipse-temurin:17-jdk-alpine
+WORKDIR /app
+COPY target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\gateway-service\pom.xml =====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.3</version> <relativePath/>
+    </parent>
+
+    <groupId>com.yazlab</groupId>
+    <artifactId>gateway-service</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>gateway-service</name>
+    <description>API Gateway for Film Platform</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2023.0.0</spring-cloud.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-gateway</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\monitoring\prometheus.yml =====
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'dispatcher'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['dispatcher:8080']
+
+  - job_name: 'auth-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['auth-service:8081']
+
+  - job_name: 'content-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['content-service:8082']
+
+  - job_name: 'review-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['review-service:8083']
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\.mvn\wrapper\maven-wrapper.properties =====
+wrapperVersion=3.3.4
+distributionType=only-script
+distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.12/apache-maven-3.9.12-bin.zip
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\main\controller\ReviewController.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\main\dto\ReviewRequest.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\main\dto\ReviewResponse.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\main\java\com\yazlab\reviewservice\controller\ReviewController.java =====
+package com.yazlab.reviewservice.controller;
+
+import com.yazlab.reviewservice.dto.ReviewRequest;
+import com.yazlab.reviewservice.dto.ReviewResponse;
+import com.yazlab.reviewservice.service.ReviewService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/reviews")
+public class ReviewController {
+
+    private final ReviewService reviewService;
+
+    
+    public ReviewController(ReviewService reviewService) {
+        this.reviewService = reviewService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ReviewResponse>> getAllReviews() {
+        return ResponseEntity.ok(reviewService.getAllReviews());
+    }
+
+    @PostMapping
+    public ResponseEntity<ReviewResponse> addReview(@RequestBody ReviewRequest request) {
+        return ResponseEntity.ok(reviewService.saveReview(request));
+    }
+
+    @GetMapping("/film/{filmId}")
+    public ResponseEntity<List<ReviewResponse>> getReviewsByFilm(@PathVariable String filmId) {
+        return ResponseEntity.ok(reviewService.getReviewsByFilmId(filmId));
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\main\java\com\yazlab\reviewservice\dto\ReviewRequest.java =====
+package com.yazlab.reviewservice.dto;
+
+public class ReviewRequest {
+    private String filmId;
+    private String kullaniciAdi;
+    private String yorumMetni;
+    private double puan;
+    public String getFilmId() { return filmId; }
+    public void setFilmId(String filmId) { this.filmId = filmId; }
+    public String getKullaniciAdi() { return kullaniciAdi; }
+    public void setKullaniciAdi(String kullaniciAdi) { this.kullaniciAdi = kullaniciAdi; }
+    public String getYorumMetni() { return yorumMetni; }
+    public void setYorumMetni(String yorumMetni) { this.yorumMetni = yorumMetni; }
+    public double getPuan() { return puan; }
+    public void setPuan(double puan) { this.puan = puan; }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\main\java\com\yazlab\reviewservice\dto\ReviewResponse.java =====
+package com.yazlab.reviewservice.dto;
+
+public class ReviewResponse {
+    private String id;
+    private String filmId;
+    private String kullaniciAdi;
+    private String yorumMetni;
+    private double puan;
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getFilmId() { return filmId; }
+    public void setFilmId(String filmId) { this.filmId = filmId; }
+    public String getKullaniciAdi() { return kullaniciAdi; }
+    public void setKullaniciAdi(String kullaniciAdi) { this.kullaniciAdi = kullaniciAdi; }
+    public String getYorumMetni() { return yorumMetni; }
+    public void setYorumMetni(String yorumMetni) { this.yorumMetni = yorumMetni; }
+    public double getPuan() { return puan; }
+    public void setPuan(double puan) { this.puan = puan; }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\main\java\com\yazlab\reviewservice\model\Review.java =====
+package com.yazlab.reviewservice.model;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "reviews")
+public class Review {
+    @Id
+    private String id;
+    private String filmId;
+    private String kullaniciAdi;
+    private String yorumMetni;
+    private double puan;
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getFilmId() { return filmId; }
+    public void setFilmId(String filmId) { this.filmId = filmId; }
+    public String getKullaniciAdi() { return kullaniciAdi; }
+    public void setKullaniciAdi(String kullaniciAdi) { this.kullaniciAdi = kullaniciAdi; }
+    public String getYorumMetni() { return yorumMetni; }
+    public void setYorumMetni(String yorumMetni) { this.yorumMetni = yorumMetni; }
+    public double getPuan() { return puan; }
+    public void setPuan(double puan) { this.puan = puan; }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\main\java\com\yazlab\reviewservice\repository\ReviewRepository.java =====
+package com.yazlab.reviewservice.repository;
+
+import com.yazlab.reviewservice.model.Review;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import java.util.List;
+
+public interface ReviewRepository extends MongoRepository<Review, String> {
+    List<Review> findByFilmId(String filmId);
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\main\java\com\yazlab\reviewservice\service\ReviewService.java =====
+package com.yazlab.reviewservice.service;
+
+import com.yazlab.reviewservice.dto.ReviewRequest;
+import com.yazlab.reviewservice.dto.ReviewResponse;
+import com.yazlab.reviewservice.model.Review;
+import com.yazlab.reviewservice.repository.ReviewRepository;
+import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class ReviewService {
+
+    private final ReviewRepository repository;
+
+    public ReviewService(ReviewRepository repository) {
+        this.repository = repository;
+    }
+
+    public ReviewResponse saveReview(ReviewRequest request) {
+        if (request.getPuan() < 0 || request.getPuan() > 10) {
+            throw new RuntimeException("Puan 0 ile 10 arasÄ±nda olmalÄ±dÄ±r!");
+        }
+        if (request.getYorumMetni() == null || request.getYorumMetni().trim().isEmpty()) {
+            throw new RuntimeException("Yorum metni boÅŸ bÄ±rakÄ±lamaz!");
+        }
+
+        Review review = new Review();
+        review.setFilmId(request.getFilmId());
+        review.setKullaniciAdi(request.getKullaniciAdi());
+        review.setYorumMetni(request.getYorumMetni());
+        review.setPuan(request.getPuan());
+
+        Review savedReview = repository.save(review);
+        return mapToResponse(savedReview);
+    }
+
+    public List<ReviewResponse> getAllReviews() {
+        return repository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<ReviewResponse> getReviewsByFilmId(String filmId) {
+        return repository.findByFilmId(filmId)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    private ReviewResponse mapToResponse(Review review) {
+        ReviewResponse response = new ReviewResponse();
+        response.setId(review.getId());
+        response.setFilmId(review.getFilmId());
+        response.setKullaniciAdi(review.getKullaniciAdi());
+        response.setYorumMetni(review.getYorumMetni());
+        response.setPuan(review.getPuan());
+        return response;
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\main\java\com\yazlab\reviewservice\ReviewApplication.java =====
+package com.yazlab.reviewservice; 
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class ReviewApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ReviewApplication.class, args);
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\main\model\Review.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\main\repository\ReviewRepository.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\main\resources\application.yml =====
+server:
+  port: 8083
+
+spring:
+  application:
+    name: review-service
+  data:
+    mongodb:
+      uri: mongodb://mongo-review:27017/review_db
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\main\service\ReviewService.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\main\ReviewApplication.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\src\pom.xml =====
+<root xmlns="http://java.sun.com/JSP/Page" version="1.2"></root>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\Dockerfile =====
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8083
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\review-service\pom.xml =====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.4</version>
+        <relativePath/>
+    </parent>
+    <groupId>com.yazlab</groupId>
+    <artifactId>reviewservice</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>reviewservice</name>
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\reviewservice\.mvn\wrapper\maven-wrapper.properties =====
+wrapperVersion=3.3.4
+distributionType=only-script
+distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.12/apache-maven-3.9.12-bin.zip
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\reviewservice\src\main\java\com\yazlab\reviewservice\controller\ReviewController.java =====
+package com.yazlab.reviewservice.controller;
+
+import com.yazlab.reviewservice.dto.ReviewRequest;
+import com.yazlab.reviewservice.dto.ReviewResponse;
+import com.yazlab.reviewservice.service.ReviewService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/reviews")
+public class ReviewController {
+
+    private final ReviewService reviewService;
+
+    
+    public ReviewController(ReviewService reviewService) {
+        this.reviewService = reviewService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ReviewResponse>> getAllReviews() {
+        return ResponseEntity.ok(reviewService.getAllReviews());
+    }
+
+    @PostMapping
+    public ResponseEntity<ReviewResponse> addReview(@RequestBody ReviewRequest request) {
+        return ResponseEntity.ok(reviewService.saveReview(request));
+    }
+
+    @GetMapping("/film/{filmId}")
+    public ResponseEntity<List<ReviewResponse>> getReviewsByFilm(@PathVariable String filmId) {
+        return ResponseEntity.ok(reviewService.getReviewsByFilmId(filmId));
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\reviewservice\src\main\java\com\yazlab\reviewservice\dto\ReviewRequest.java =====
+package com.yazlab.reviewservice.dto;
+
+public class ReviewRequest {
+    private String filmId;
+    private String kullaniciAdi;
+    private String yorumMetni;
+    private double puan;
+    public String getFilmId() { return filmId; }
+    public void setFilmId(String filmId) { this.filmId = filmId; }
+    public String getKullaniciAdi() { return kullaniciAdi; }
+    public void setKullaniciAdi(String kullaniciAdi) { this.kullaniciAdi = kullaniciAdi; }
+    public String getYorumMetni() { return yorumMetni; }
+    public void setYorumMetni(String yorumMetni) { this.yorumMetni = yorumMetni; }
+    public double getPuan() { return puan; }
+    public void setPuan(double puan) { this.puan = puan; }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\reviewservice\src\main\java\com\yazlab\reviewservice\dto\ReviewResponse.java =====
+package com.yazlab.reviewservice.dto;
+
+public class ReviewResponse {
+    private String id;
+    private String filmId;
+    private String kullaniciAdi;
+    private String yorumMetni;
+    private double puan;
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getFilmId() { return filmId; }
+    public void setFilmId(String filmId) { this.filmId = filmId; }
+    public String getKullaniciAdi() { return kullaniciAdi; }
+    public void setKullaniciAdi(String kullaniciAdi) { this.kullaniciAdi = kullaniciAdi; }
+    public String getYorumMetni() { return yorumMetni; }
+    public void setYorumMetni(String yorumMetni) { this.yorumMetni = yorumMetni; }
+    public double getPuan() { return puan; }
+    public void setPuan(double puan) { this.puan = puan; }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\reviewservice\src\main\java\com\yazlab\reviewservice\model\Review.java =====
+package com.yazlab.reviewservice.model;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "reviews")
+public class Review {
+    @Id
+    private String id;
+    private String filmId;
+    private String kullaniciAdi;
+    private String yorumMetni;
+    private double puan;
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getFilmId() { return filmId; }
+    public void setFilmId(String filmId) { this.filmId = filmId; }
+    public String getKullaniciAdi() { return kullaniciAdi; }
+    public void setKullaniciAdi(String kullaniciAdi) { this.kullaniciAdi = kullaniciAdi; }
+    public String getYorumMetni() { return yorumMetni; }
+    public void setYorumMetni(String yorumMetni) { this.yorumMetni = yorumMetni; }
+    public double getPuan() { return puan; }
+    public void setPuan(double puan) { this.puan = puan; }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\reviewservice\src\main\java\com\yazlab\reviewservice\repository\ReviewRepository.java =====
+package com.yazlab.reviewservice.repository;
+
+import com.yazlab.reviewservice.model.Review;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import java.util.List;
+
+public interface ReviewRepository extends MongoRepository<Review, String> {
+    List<Review> findByFilmId(String filmId);
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\reviewservice\src\main\java\com\yazlab\reviewservice\service\ReviewService.java =====
+package com.yazlab.reviewservice.service;
+
+import com.yazlab.reviewservice.dto.ReviewRequest;
+import com.yazlab.reviewservice.dto.ReviewResponse;
+import com.yazlab.reviewservice.model.Review;
+import com.yazlab.reviewservice.repository.ReviewRepository;
+import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class ReviewService {
+
+    private final ReviewRepository repository;
+
+    public ReviewService(ReviewRepository repository) {
+        this.repository = repository;
+    }
+
+    public ReviewResponse saveReview(ReviewRequest request) {
+        if (request.getPuan() < 0 || request.getPuan() > 10) {
+            throw new RuntimeException("Puan 0 ile 10 arasÄ±nda olmalÄ±dÄ±r!");
+        }
+        if (request.getYorumMetni() == null || request.getYorumMetni().trim().isEmpty()) {
+            throw new RuntimeException("Yorum metni boÅŸ bÄ±rakÄ±lamaz!");
+        }
+
+        Review review = new Review();
+        review.setFilmId(request.getFilmId());
+        review.setKullaniciAdi(request.getKullaniciAdi());
+        review.setYorumMetni(request.getYorumMetni());
+        review.setPuan(request.getPuan());
+
+        Review savedReview = repository.save(review);
+        return mapToResponse(savedReview);
+    }
+
+    public List<ReviewResponse> getAllReviews() {
+        return repository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<ReviewResponse> getReviewsByFilmId(String filmId) {
+        return repository.findByFilmId(filmId)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    private ReviewResponse mapToResponse(Review review) {
+        ReviewResponse response = new ReviewResponse();
+        response.setId(review.getId());
+        response.setFilmId(review.getFilmId());
+        response.setKullaniciAdi(review.getKullaniciAdi());
+        response.setYorumMetni(review.getYorumMetni());
+        response.setPuan(review.getPuan());
+        return response;
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\reviewservice\src\main\java\com\yazlab\reviewservice\ReviewApplication.java =====
+package com.yazlab.reviewservice; 
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class ReviewApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ReviewApplication.class, args);
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\reviewservice\src\main\resources\application.yml =====
+spring:
+  application:
+    name: review-service
+  data:
+    mongodb:
+      uri: mongodb://mongodb_container:27017/reviewdb
+
+server:
+  port: 8082
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,prometheus,metrics"
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name} 
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\reviewservice\Dockerfile =====
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:17-jre-jammy
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\reviewservice\pom.xml =====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.4</version>
+        <relativePath/> 
+    </parent>
+    <groupId>com.yazlab</groupId>
+    <artifactId>reviewservice</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>reviewservice</name>
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-registry-prometheus</artifactId>
+</dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\.idea\misc.xml =====
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectRootManager" version="2" project-jdk-name="openjdk-25" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+</project>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\.idea\modules.xml =====
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/YazLab-Proje1.iml" filepath="$PROJECT_DIR$/.idea/YazLab-Proje1.iml" />
+    </modules>
+  </component>
+</project>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\.idea\vcs.xml =====
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$/FilmDiziOneriPlatform" vcs="Git" />
+  </component>
+</project>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\auth-service\src\main\controller\AuthController.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\auth-service\src\main\dto\AuthResponse.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\auth-service\src\main\dto\LoginRequest.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\auth-service\src\main\dto\RegisterRequest.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\auth-service\src\main\model\User.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\auth-service\src\main\repository\UserRepository.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\auth-service\src\main\resources\application.yml =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\auth-service\src\main\security\JwtUtil.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\auth-service\src\main\service\AuthService.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\auth-service\src\main\AuthApplication.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\auth-service\Dockerfile =====
+FROM ubuntu:latest
+LABEL authors="Furkan"
+
+ENTRYPOINT ["top", "-b"]
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\auth-service\pom.xml =====
+<root xmlns="http://java.sun.com/JSP/Page" version="1.2"></root>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\contentservice\.mvn\wrapper\maven-wrapper.properties =====
+wrapperVersion=3.3.4
+distributionType=only-script
+distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.12/apache-maven-3.9.12-bin.zip
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\contentservice\src\main\controller\ContentController.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\contentservice\src\main\controller\FilmController.java =====
+package com.yazlab.contentservice.controller;
+
+import com.yazlab.contentservice.model.Film;
+import com.yazlab.contentservice.repository.FilmRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/film-merkezi")
+public class FilmController {
+
+    @Autowired
+    private FilmRepository filmDeposu;
+
+    @PostMapping("/ekle")
+    public ResponseEntity<Film> yeniKayit(@RequestBody Film gelenVeri) {
+        Film kaydedilen = filmDeposu.save(gelenVeri);
+        return new ResponseEntity<>(kaydedilen, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/liste")
+    public List<Film> hepsiniGetir() {
+        return filmDeposu.findAll();
+    }
+
+    @GetMapping("/ara/{filmIsmi}")
+    public ResponseEntity<?> tekilSorgu(@PathVariable String filmIsmi) {
+        Film sonuc = filmDeposu.findByFilmAdi(filmIsmi);
+        
+        if (sonuc != null) {
+            return ResponseEntity.ok(sonuc);
+        }
+        
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                             .body(filmIsmi + " isimli icerik veri tabaninda bulunamadi.");
+    }
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\contentservice\src\main\dto\FilmRequest.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\contentservice\src\main\dto\FilmResponse.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\contentservice\src\main\java\com\yazlab\contentservice\model\Film.java =====
+package com.yazlab.contentservice.model;
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\contentservice\src\main\java\com\yazlab\contentservice\ContentServiceApplication.java =====
+package com.yazlab.contentservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class ContentServiceApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(ContentServiceApplication.class, args);
+	}
+
+}
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\contentservice\src\main\repository\FilmRepository.java =====
+package com.yazlab.contentservice.repository;
+
+import com.yazlab.contentservice.model.Film;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface FilmRepository extends MongoRepository<Film, String> {
+    Film findByFilmAdi(String filmAdi);
+}
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\contentservice\src\main\resources\application.properties =====
+spring.application.name=content-service
+spring.data.mongodb.uri=mongodb://db_content:27017/film_arsivi
+
+logging.level.org.springframework.data.mongodb=DEBUG
+server.port=8080
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\contentservice\src\main\resources\application.yml =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\contentservice\src\main\service\ContentService.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\contentservice\src\main\ContentApplication.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\contentservice\src\test\java\com\yazlab\content_service\ContentServiceApplicationTests.java =====
+package com.yazlab.content_service;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class ContentServiceApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\contentservice\Dockerfile =====
+FROM ubuntu:latest
+LABEL authors="Furkan"
+
+ENTRYPOINT ["top", "-b"]
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\contentservice\pom.xml =====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>4.0.3</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.yazlab</groupId>
+	<artifactId>content-service</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>content-service</name>
+	<description/>
+	<url/>
+	<licenses>
+		<license/>
+	</licenses>
+	<developers>
+		<developer/>
+	</developers>
+	<scm>
+		<connection/>
+		<developerConnection/>
+		<tag/>
+		<url/>
+	</scm>
+	<properties>
+		<java.version>17</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-mongodb</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-mongodb-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\dispatcher\src\main\exception\GlobalExceptionHandler.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\dispatcher\src\main\filter\AuthFilter.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\dispatcher\src\main\logging\LogService.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\dispatcher\src\main\proxy\ProxyService.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\dispatcher\src\main\resources\application.yml =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\dispatcher\src\main\routing\RoutingService.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\dispatcher\src\main\DispatcherApplication.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\dispatcher\src\test\filter\AuthFilterTest.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\dispatcher\src\test\proxy\ProxyServiceTest.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\dispatcher\src\test\routing\RoutingServiceTest.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\dispatcher\Dockerfile =====
+FROM ubuntu:latest
+LABEL authors="Furkan"
+
+ENTRYPOINT ["top", "-b"]
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\dispatcher\pom.xml =====
+<root xmlns="http://java.sun.com/JSP/Page" version="1.2"></root>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\monitoring\prometheus.yml =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\review-service\src\main\controller\ReviewController.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\review-service\src\main\dto\ReviewRequest.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\review-service\src\main\dto\ReviewResponse.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\review-service\src\main\model\Review.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\review-service\src\main\repository\ReviewRepository.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\review-service\src\main\resources\application.yml =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\review-service\src\main\service\ReviewService.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\review-service\src\main\ReviewApplication.java =====
+
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\review-service\src\Dockerfile =====
+FROM ubuntu:latest
+LABEL authors="Furkan"
+
+ENTRYPOINT ["top", "-b"]
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\Users\Furkan\Desktop\YazLab-Proje1\review-service\src\pom.xml =====
+<root xmlns="http://java.sun.com/JSP/Page" version="1.2"></root>
+
+
+===== C:\Users\Furkan\Desktop\YazLab-Proje1\FilmDiziOneriPlatform\docker-compose.yml =====
+version: '3.8'
+
+networks:
+  internal-network:
+    driver: bridge
+  external-network:
+    driver: bridge
+
+services:
+
+  # ===== DISPATCHER =====
+  dispatcher:
+    build: ./dispatcher
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo-dispatcher:27017/dispatcher_db
+      - JWT_SECRET=filmplatform-secret-key-must-be-at-least-32-chars
+    depends_on:
+      - mongo-dispatcher
+      - auth-service
+      - content-service
+      - review-service
+    networks:
+      - internal-network
+      - external-network
+
+  # ===== AUTH SERVICE =====
+  auth-service:
+    build: ./auth-service
+    expose:
+      - "8081"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo-auth:27017/auth_db
+      - JWT_SECRET=filmplatform-secret-key-must-be-at-least-32-chars
+    depends_on:
+      - mongo-auth
+    networks:
+      - internal-network
+
+  # ===== CONTENT SERVICE =====
+  content-service:
+    build: ./content-service
+    expose:
+      - "8082"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo-content:27017/content_db
+    depends_on:
+      - mongo-content
+    networks:
+      - internal-network
+
+  # ===== REVIEW SERVICE =====
+  review-service:
+    build: ./review-service
+    expose:
+      - "8083"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo-review:27017/review_db
+    depends_on:
+      - mongo-review
+    networks:
+      - internal-network
+
+  # ===== MONGODB'LER =====
+  mongo-dispatcher:
+    image: mongo:7.0
+    expose:
+      - "27017"
+    volumes:
+      - mongo-dispatcher-data:/data/db
+    networks:
+      - internal-network
+
+  mongo-auth:
+    image: mongo:7.0
+    expose:
+      - "27017"
+    volumes:
+      - mongo-auth-data:/data/db
+    networks:
+      - internal-network
+
+  mongo-content:
+    image: mongo:7.0
+    expose:
+      - "27017"
+    volumes:
+      - mongo-content-data:/data/db
+    networks:
+      - internal-network
+
+  mongo-review:
+    image: mongo:7.0
+    expose:
+      - "27017"
+    volumes:
+      - mongo-review-data:/data/db
+    networks:
+      - internal-network
+
+  # ===== PROMETHEUS =====
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - internal-network
+
+  # ===== GRAFANA =====
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - internal-network
+      - external-network
+
+volumes:
+  mongo-dispatcher-data:
+  mongo-auth-data:
+  mongo-content-data:
+  mongo-review-data:
