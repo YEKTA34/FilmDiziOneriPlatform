@@ -441,7 +441,7 @@ graph LR
   ![](screenshoots/yorum_ve_puan_ekle.png)
 
 - **Grafana Dashboard:**  
-  `[EKRAN GÖRÜNTÜSÜ EKLE — Servis metrikleri gösterimi]`
+  ![](screenshoots/grafana.png)
 
 - **Locust Yük Testi Sonuçları:**  
   ![](screenshoots/locust.png)
